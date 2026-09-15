@@ -6,3 +6,7 @@ export { Checkbox } from './Checkbox';
 export { ScreenBackground } from './ScreenBackground';
 export { SparkleField } from './SparkleField';
 export { SoakingarriLogo } from './SoakingarriLogo';
+export { ChatBubble, TypingBubble } from './ChatBubble';
+export { StatTile } from './StatTile';
+export { Meter } from './Meter';
+export { ProfileAvatar } from './ProfileAvatar';

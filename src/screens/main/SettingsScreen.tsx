@@ -1,66 +1,216 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenBackground, Button } from '../../components';
-import { colors, fonts, spacing } from '../../theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenBackground, Card, Button } from '../../components';
+import { colors, fonts, radii, spacing } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 
+const SETTINGS_STORAGE_KEY = 'soakingarri:settings';
+
+type ToggleRow = {
+  id: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  description: string;
+  defaultValue: boolean;
+};
+
+const PREFERENCE_ROWS: ToggleRow[] = [
+  {
+    id: 'push',
+    icon: 'notifications-outline',
+    title: 'Push notifications',
+    description: 'Session reminders and rank updates',
+    defaultValue: true,
+  },
+  {
+    id: 'digest',
+    icon: 'mail-outline',
+    title: 'Email digests',
+    description: 'Weekly summary of your progress',
+    defaultValue: false,
+  },
+  {
+    id: 'motion',
+    icon: 'accessibility-outline',
+    title: 'Reduce motion',
+    description: 'Minimize animations across the app',
+    defaultValue: false,
+  },
+];
+
+const PRIVACY_ROWS: ToggleRow[] = [
+  {
+    id: 'aiTraining',
+    icon: 'shield-checkmark-outline',
+    title: 'Share data to improve AI',
+    description: 'Help refine Soakingarri AI with anonymized chats',
+    defaultValue: true,
+  },
+  {
+    id: 'personalization',
+    icon: 'sparkles-outline',
+    title: 'Personalized recommendations',
+    description: 'Tailor tips using your activity',
+    defaultValue: true,
+  },
+];
+
 export function SettingsScreen() {
+  const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
+  const [values, setValues] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    [...PREFERENCE_ROWS, ...PRIVACY_ROWS].forEach((row) => {
+      initial[row.id] = row.defaultValue;
+    });
+    return initial;
+  });
+
+  useEffect(() => {
+    AsyncStorage.getItem(SETTINGS_STORAGE_KEY)
+      .then((raw) => {
+        if (raw) setValues((prev) => ({ ...prev, ...JSON.parse(raw) }));
+      })
+      .catch(() => {});
+  }, []);
+
+  const toggle = (id: string) => {
+    setValues((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  };
 
   return (
     <ScreenBackground>
-      <View style={styles.center}>
-        <View style={styles.iconBadge}>
-          <Ionicons name="settings-outline" size={26} color={colors.gold} />
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.screenTitle}>Settings</Text>
+
+        <Text style={styles.sectionTitle}>Preferences</Text>
+        <Card style={styles.card}>
+          {PREFERENCE_ROWS.map((row, index) => (
+            <SettingsToggleRow
+              key={row.id}
+              row={row}
+              value={values[row.id]}
+              onChange={() => toggle(row.id)}
+              isLast={index === PREFERENCE_ROWS.length - 1}
+            />
+          ))}
+        </Card>
+
+        <Text style={styles.sectionTitle}>Privacy</Text>
+        <Card style={styles.card}>
+          {PRIVACY_ROWS.map((row, index) => (
+            <SettingsToggleRow
+              key={row.id}
+              row={row}
+              value={values[row.id]}
+              onChange={() => toggle(row.id)}
+              isLast={index === PRIVACY_ROWS.length - 1}
+            />
+          ))}
+        </Card>
+
+        <View style={styles.logoutWrap}>
+          <Button label="Log Out" variant="outline" onPress={signOut} />
         </View>
-        <Text style={styles.title}>Settings</Text>
-        <Text style={styles.subtitle}>
-          Privacy, AI preferences, accessibility, and notifications will live
-          here.
-        </Text>
-      </View>
-      <View style={styles.logoutWrap}>
-        <Button label="Log Out" variant="outline" onPress={signOut} />
-      </View>
+      </ScrollView>
     </ScreenBackground>
   );
 }
 
+function SettingsToggleRow({
+  row,
+  value,
+  onChange,
+  isLast,
+}: {
+  row: ToggleRow;
+  value: boolean;
+  onChange: () => void;
+  isLast: boolean;
+}) {
+  return (
+    <View style={[styles.row, !isLast && styles.rowBorder]}>
+      <View style={styles.rowIcon}>
+        <Ionicons name={row.icon} size={18} color={colors.gold} />
+      </View>
+      <View style={styles.rowText}>
+        <Text style={styles.rowTitle}>{row.title}</Text>
+        <Text style={styles.rowDescription}>{row.description}</Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: colors.surfaceAlt, true: colors.gold }}
+        thumbColor="#FFFFFF"
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
   },
-  iconBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  title: {
+  screenTitle: {
     color: colors.text,
-    fontFamily: fonts.bold,
-    fontSize: 18,
-    marginBottom: spacing.xs,
+    fontFamily: fonts.extraBold,
+    fontSize: 22,
+    marginBottom: spacing.lg,
   },
-  subtitle: {
+  sectionTitle: {
+    color: colors.textMuted,
+    fontFamily: fonts.semiBold,
+    fontSize: 13,
+    marginBottom: spacing.sm,
+  },
+  card: {
+    padding: 0,
+    marginBottom: spacing.lg,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  rowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  rowIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.md,
+    backgroundColor: colors.goldMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowText: {
+    flex: 1,
+  },
+  rowTitle: {
+    color: colors.text,
+    fontFamily: fonts.semiBold,
+    fontSize: 14,
+  },
+  rowDescription: {
     color: colors.textMuted,
     fontFamily: fonts.regular,
-    fontSize: 13,
-    textAlign: 'center',
+    fontSize: 12,
+    marginTop: 2,
   },
   logoutWrap: {
-    position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
-    bottom: spacing.xl,
+    marginTop: spacing.sm,
   },
 });

@@ -14,8 +14,15 @@ import { AuthStackParamList } from '../../navigation/types';
 import { ScreenBackground, SoakingarriLogo, Card, TextField, Button, Divider } from '../../components';
 import { colors, fonts, spacing } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
+import { isValidEmail, isValidSignupPassword } from '../../utils/validation';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Signup'>;
+
+type FormErrors = {
+  fullName?: string;
+  email?: string;
+  password?: string;
+};
 
 const FEATURES: { icon: keyof typeof Ionicons.glyphMap; title: string; description: string }[] = [
   {
@@ -35,6 +42,35 @@ export function SignupScreen({ navigation }: Props) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const handleFullNameChange = (value: string) => {
+    setFullName(value);
+    if (errors.fullName) setErrors((prev) => ({ ...prev, fullName: undefined }));
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+  };
+
+  const handleCreateAccount = () => {
+    const nextErrors: FormErrors = {};
+    if (!fullName.trim()) nextErrors.fullName = 'Full name is required';
+    if (!email.trim()) nextErrors.email = 'Email is required';
+    else if (!isValidEmail(email)) nextErrors.email = 'Enter a valid email address';
+    if (!password) nextErrors.password = 'Password is required';
+    else if (!isValidSignupPassword(password))
+      nextErrors.password = 'Use at least 12 characters with one special symbol';
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length === 0) signIn();
+  };
 
   return (
     <ScreenBackground>
@@ -91,7 +127,8 @@ export function SignupScreen({ navigation }: Props) {
               label="Full Name"
               placeholder="Alex Rivera"
               value={fullName}
-              onChangeText={setFullName}
+              onChangeText={handleFullNameChange}
+              error={errors.fullName}
             />
             <TextField
               label="Email Address"
@@ -99,18 +136,27 @@ export function SignupScreen({ navigation }: Props) {
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={handleEmailChange}
+              error={errors.email}
             />
             <TextField
               label="Password"
               placeholder="••••••••"
               secure
               value={password}
-              onChangeText={setPassword}
+              onChangeText={handlePasswordChange}
+              error={errors.password}
             />
-            <Text style={styles.helper}>Minimum 12 characters with one special symbol.</Text>
+            {!errors.password ? (
+              <Text style={styles.helper}>Minimum 12 characters with one special symbol.</Text>
+            ) : null}
 
-            <Button label="Create Account" variant="light" onPress={signIn} style={styles.createButton} />
+            <Button
+              label="Create Account"
+              variant="light"
+              onPress={handleCreateAccount}
+              style={styles.createButton}
+            />
 
             <Divider label="OR CONTINUE WITH" />
 

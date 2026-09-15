@@ -14,14 +14,41 @@ import { AuthStackParamList } from '../../navigation/types';
 import { ScreenBackground, SoakingarriLogo, Card, TextField, Button, Checkbox, Divider } from '../../components';
 import { colors, fonts, spacing } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
+import { isValidEmail } from '../../utils/validation';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+
+type FormErrors = {
+  email?: string;
+  password?: string;
+};
 
 export function LoginScreen({ navigation }: Props) {
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+  };
+
+  const handleLogin = () => {
+    const nextErrors: FormErrors = {};
+    if (!email.trim()) nextErrors.email = 'Email is required';
+    else if (!isValidEmail(email)) nextErrors.email = 'Enter a valid email address';
+    if (!password) nextErrors.password = 'Password is required';
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length === 0) signIn();
+  };
 
   return (
     <ScreenBackground>
@@ -54,7 +81,8 @@ export function LoginScreen({ navigation }: Props) {
                 autoCapitalize="none"
                 keyboardType="email-address"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={handleEmailChange}
+                error={errors.email}
               />
               <TextField
                 label="Password"
@@ -63,7 +91,8 @@ export function LoginScreen({ navigation }: Props) {
                 secure
                 rightLabel="Forgot Password?"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={handlePasswordChange}
+                error={errors.password}
               />
 
               <View style={styles.rememberRow}>
@@ -78,7 +107,7 @@ export function LoginScreen({ navigation }: Props) {
                 label="Log In"
                 variant="secondary"
                 icon="arrow-forward"
-                onPress={signIn}
+                onPress={handleLogin}
                 style={styles.loginButton}
               />
 

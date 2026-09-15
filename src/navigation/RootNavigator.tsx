@@ -4,6 +4,7 @@ import { MainTabs } from './MainTabs';
 import { useAuth } from '../context/AuthContext';
 
 export function RootNavigator() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return null;
   return isAuthenticated ? <MainTabs /> : <AuthStack />;
 }
