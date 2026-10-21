@@ -16,6 +16,7 @@ import {
 
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AuthProvider } from './src/context/AuthContext';
+import { SettingsProvider } from './src/context/SettingsContext';
 import { colors } from './src/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -55,12 +56,14 @@ export default function App() {
     <GestureHandlerRootView style={styles.flex} onLayout={onLayoutRootView}>
       <SafeAreaProvider>
         <AuthProvider>
-          <NavigationContainer theme={navigationTheme}>
-            <View style={styles.flex}>
-              <StatusBar style="light" />
-              <RootNavigator />
-            </View>
-          </NavigationContainer>
+          <SettingsProvider>
+            <NavigationContainer theme={navigationTheme}>
+              <View style={styles.flex}>
+                <StatusBar style="light" />
+                <RootNavigator />
+              </View>
+            </NavigationContainer>
+          </SettingsProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

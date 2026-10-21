@@ -10,3 +10,4 @@ export { ChatBubble, TypingBubble } from './ChatBubble';
 export { StatTile } from './StatTile';
 export { Meter } from './Meter';
 export { ProfileAvatar } from './ProfileAvatar';
+export { SocialSignInButtons } from './SocialSignInButtons';

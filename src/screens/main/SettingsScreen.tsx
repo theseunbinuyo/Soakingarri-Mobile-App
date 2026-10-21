@@ -1,20 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenBackground, Card, Button } from '../../components';
 import { colors, fonts, radii, spacing } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
-
-const SETTINGS_STORAGE_KEY = 'soakingarri:settings';
+import { SettingId, useSettings } from '../../context/SettingsContext';
 
 type ToggleRow = {
-  id: string;
+  id: SettingId;
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
-  defaultValue: boolean;
 };
 
 const PREFERENCE_ROWS: ToggleRow[] = [
@@ -23,21 +20,18 @@ const PREFERENCE_ROWS: ToggleRow[] = [
     icon: 'notifications-outline',
     title: 'Push notifications',
     description: 'Session reminders and rank updates',
-    defaultValue: true,
   },
   {
     id: 'digest',
     icon: 'mail-outline',
     title: 'Email digests',
     description: 'Weekly summary of your progress',
-    defaultValue: false,
   },
   {
     id: 'motion',
     icon: 'accessibility-outline',
     title: 'Reduce motion',
     description: 'Minimize animations across the app',
-    defaultValue: false,
   },
 ];
 
@@ -47,43 +41,19 @@ const PRIVACY_ROWS: ToggleRow[] = [
     icon: 'shield-checkmark-outline',
     title: 'Share data to improve AI',
     description: 'Help refine Soakingarri AI with anonymized chats',
-    defaultValue: true,
   },
   {
     id: 'personalization',
     icon: 'sparkles-outline',
     title: 'Personalized recommendations',
     description: 'Tailor tips using your activity',
-    defaultValue: true,
   },
 ];
 
 export function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
-  const [values, setValues] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    [...PREFERENCE_ROWS, ...PRIVACY_ROWS].forEach((row) => {
-      initial[row.id] = row.defaultValue;
-    });
-    return initial;
-  });
-
-  useEffect(() => {
-    AsyncStorage.getItem(SETTINGS_STORAGE_KEY)
-      .then((raw) => {
-        if (raw) setValues((prev) => ({ ...prev, ...JSON.parse(raw) }));
-      })
-      .catch(() => {});
-  }, []);
-
-  const toggle = (id: string) => {
-    setValues((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next)).catch(() => {});
-      return next;
-    });
-  };
+  const { values, toggle } = useSettings();
 
   return (
     <ScreenBackground>

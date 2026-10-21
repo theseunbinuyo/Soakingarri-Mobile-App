@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ChatMessage } from '../data/chat';
+import { useSettings } from '../context/SettingsContext';
 import { colors, fonts, radii, spacing } from '../theme';
 
 type Props = {
@@ -41,9 +42,14 @@ export function TypingBubble() {
 }
 
 function TypingDot({ delay }: { delay: number }) {
+  const { reduceMotion } = useSettings();
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
+    if (reduceMotion) {
+      opacity.setValue(0.6);
+      return;
+    }
     const anim = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, {
@@ -61,7 +67,7 @@ function TypingDot({ delay }: { delay: number }) {
     );
     anim.start();
     return () => anim.stop();
-  }, [delay, opacity]);
+  }, [delay, opacity, reduceMotion]);
 
   return <Animated.View style={[styles.typingDot, { opacity }]} />;
 }

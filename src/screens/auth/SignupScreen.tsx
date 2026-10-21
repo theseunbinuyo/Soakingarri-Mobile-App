@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/types';
-import { ScreenBackground, SoakingarriLogo, Card, TextField, Button, Divider } from '../../components';
+import { ScreenBackground, SoakingarriLogo, Card, TextField, Button, Divider, SocialSignInButtons } from '../../components';
 import { colors, fonts, spacing } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { isValidEmail, isValidSignupPassword } from '../../utils/validation';
@@ -160,10 +160,7 @@ export function SignupScreen({ navigation }: Props) {
 
             <Divider label="OR CONTINUE WITH" />
 
-            <View style={styles.socialRow}>
-              <Button label="Google" variant="outline" style={styles.socialButton} onPress={signIn} />
-              <Button label="Apple ID" variant="outline" style={styles.socialButton} onPress={signIn} />
-            </View>
+            <SocialSignInButtons />
 
             <Text style={styles.terms}>
               By signing up, you agree to our{' '}
@@ -291,13 +288,6 @@ const styles = StyleSheet.create({
   },
   createButton: {
     marginBottom: spacing.sm,
-  },
-  socialRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  socialButton: {
-    flex: 1,
   },
   terms: {
     color: colors.textFaint,
